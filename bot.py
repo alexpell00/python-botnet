@@ -39,12 +39,35 @@ class bot:
         self.ip = ""
         self.listenForInput()
 
-    def addConnection(self, host, portaconn = connection()
-        conn.connect(host, port)
-        self.connections.append(conn)
+    def addConnection(self, host, port):
+        conn = connection()
+        try: 
+            conn.connect(host, port)
+            self.connections.append(conn)
+            return "Bot added at " + host + ":" + port
+        except:
+            return "Could not connect to bot at " + host + ":" + port
+            
+ 
 
     def listenForInput(self):
+        self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listener.bind(("", 8888))
+        self.listener.listen(10)
+        while 1:
+            #wait to accept a connection - blocking call
+            conn, addr = self.listener.accept()
+            print 'Connected with ' + addr[0] + ':' + str(addr[1])
+            message = conn.recv(1024).strip("\n").split(" ")
+            if not message: 
+                break
+            print(message)
+            if message[0] == "addcon":
+                output = self.addConnection(message[1], message[2])
+                conn.sendall(output)
 
 
+print("Running \n")
 bot = bot()
+
         
