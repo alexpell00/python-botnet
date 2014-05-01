@@ -1,11 +1,9 @@
 import socket
 
-class mysocket:
-    '''demonstration class only
-      - coded for clarity, not efficiency
-    '''
+class connection:
 
     def __init__(self, sock=None):
+        self.port = 8888
         if sock is None:
             self.sock = socket.socket(
                 socket.AF_INET, socket.SOCK_STREAM)
@@ -13,9 +11,11 @@ class mysocket:
             self.sock = sock
 
     def connect(self, host, port):
-        self.sock.connect((host, port))
+        self.host = host
+        self.port = port
+        self.sock.connect((self.host, self.port))
 
-    def mysend(self, msg):
+    def sendall(self, msg):
         totalsent = 0
         while totalsent < MSGLEN:
             sent = self.sock.sendall(msg[totalsent:])
@@ -23,7 +23,7 @@ class mysocket:
                 raise RuntimeError("socket connection broken")
             totalsent = totalsent + sent
 
-    def myreceive(self):
+    def receive(self):
         msg = ''
         while len(msg) < MSGLEN:
             chunk = self.sock.recv(MSGLEN-len(msg))
@@ -31,5 +31,20 @@ class mysocket:
                 raise RuntimeError("socket connection broken")
             msg = msg + chunk
         return msg
+    
+class bot:
+    
+    def __init__(self):
+        self.connections = []
+        self.ip = ""
+        self.listenForInput()
+
+    def addConnection(self, host, portaconn = connection()
+        conn.connect(host, port)
+        self.connections.append(conn)
+
+    def listenForInput(self):
 
 
+bot = bot()
+        
