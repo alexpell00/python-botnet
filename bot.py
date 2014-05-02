@@ -1,28 +1,31 @@
-import socket
+import socket, random, string
+from threading import Thread
+
+global bot
+global botid
 
 class connection:
 
     def __init__(self, sock=None):
-        self.port = 8888
-        if sock is None:
-            self.sock = socket.socket(
-                socket.AF_INET, socket.SOCK_STREAM)
-        else:
-            self.sock = sock
-
+        pass
+        
     def connect(self, host, port):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = port
-        self.sock.connect((self.host, self.port))
-
+        self.sock.connect((self.host, int(self.port)))
+        message = "0~"+toolbox().getid()+"~"+toolbox().getLocalIP()
+        self.sock.sendall(message)
+        while 1:
+            message = self.sock.recv(4096)
+            if message != " ":
+                print("Message: " + message)
+                self.sock.close()
+                break
+                                  
     def sendall(self, msg):
-        totalsent = 0
-        while totalsent < MSGLEN:
-            sent = self.sock.sendall(msg[totalsent:])
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalsent = totalsent + sent
-
+        self.sock.sendall(msg[totalsent:])
+            
     def receive(self):
         msg = ''
         while len(msg) < MSGLEN:
@@ -36,38 +39,63 @@ class bot:
     
     def __init__(self):
         self.connections = []
-        self.ip = ""
-        self.listenForInput()
-
-    def addConnection(self, host, port):
+        self.ip = toolbox().getLocalIP()
+        self.id = toolbox().idGenerator(toolbox().strGenerator(20), self.ip)
+        global botid
+        botid = self.id
+        print("Inializing with id: " + self.id)
+        Thread(target = self.listenForInput).start()
+        
+    def addConnection(self, host,port=8889):
         conn = connection()
-        try: 
+        try:
             conn.connect(host, port)
             self.connections.append(conn)
             return "Bot added at " + host + ":" + port
         except:
             return "Could not connect to bot at " + host + ":" + port
-            
- 
 
     def listenForInput(self):
         self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.listener.bind(("", 8888))
+        port = 8888
+        self.listener.bind(("", port))
         self.listener.listen(10)
+        print("Listening for user input on port " + str(port))
         while 1:
             #wait to accept a connection - blocking call
             conn, addr = self.listener.accept()
-            print 'Connected with ' + addr[0] + ':' + str(addr[1])
+            #print 'Connected with ' + addr[0] + ':' + str(addr[1])
             message = conn.recv(1024).strip("\n").split(" ")
             if not message: 
                 break
-            print(message)
             if message[0] == "addcon":
-                output = self.addConnection(message[1], message[2])
+                if len(message) == 2:
+                    output = self.addConnection(message[1])
+                else:
+                    output = self.addConnection(message[1], message[2])
                 conn.sendall(output)
+                print(output + "\n")
 
-
-print("Running \n")
-bot = bot()
-
+class toolbox:
+    def __init__(self):
+        pass
+    def strGenerator(self,size=6, chars=string.ascii_uppercase + string.digits):
+        return ''.join(random.choice(chars) for _ in range(size))
+    def getLocalIP(self):
+        return socket.gethostbyname(socket.gethostname())
+    def idGenerator(self,hashcode , ip):
+        hashls = list(hashcode)
+        ipls = list("".join(ip.split(".")))
+        result = [item for sublist in zip(hashls,ipls) for item in sublist]
+        return "".join(result)
         
+    def getid(self):
+        global bot
+        return bot.id
+   
+def main():
+    global bot
+    bot = bot()
+
+
+main()
