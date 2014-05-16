@@ -44,7 +44,8 @@ class bot:
         global botid
         botid = self.id
         print("Inializing with id: " + self.id)
-        Thread(target = self.listenForInput).start()
+        Thread(target = self.listenForUser).start()
+        Thread(target = self.listener).start()
         
     def addConnection(self, host,port=8889):
         conn = connection()
@@ -54,12 +55,23 @@ class bot:
             return "Bot added at " + host + ":" + port
         except:
             return "Could not connect to bot at " + host + ":" + port
-
-    def listenForInput(self):
+    def listener(self):
         self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        port = 8888
+        port = 8889
         self.listener.bind(("", port))
         self.listener.listen(10)
+        print("Listening for bot input on port " + str(port))
+        while 1:
+            conn, addr = self.listener.accept()           
+            message = conn.recv(1024).strip("\n").split("~")
+            
+            
+        
+    def listenForUser(self):
+        self.uListener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        port = 8888
+        self.uListener.bind(("", port))
+        self.uListener.listen(10)
         print("Listening for user input on port " + str(port))
         while 1:
             #wait to accept a connection - blocking call
@@ -75,6 +87,7 @@ class bot:
                     output = self.addConnection(message[1], message[2])
                 conn.sendall(output)
                 print(output + "\n")
+    
 
 class toolbox:
     def __init__(self):
@@ -88,7 +101,6 @@ class toolbox:
         ipls = list("".join(ip.split(".")))
         result = [item for sublist in zip(hashls,ipls) for item in sublist]
         return "".join(result)
-        
     def getid(self):
         global bot
         return bot.id
